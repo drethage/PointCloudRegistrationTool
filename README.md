@@ -3,7 +3,7 @@ Point Cloud Registration Tool
 Automatically registers (aligns) and visualizes point clouds, or processes a whole bunch at once
 
 ### Main Features:
-* Coarse-to-fine registration (correspondence-based registration followed by ICP refinement)
+* Coarse-to-fine registration (correspondence-based followed by ICP refinement)
 * PLY/OBJ input
 * GUI
 * Batch processing
@@ -17,9 +17,11 @@ Automatically registers (aligns) and visualizes point clouds, or processes a who
 ### Screenshot:
 ![Example Screenshot](img/PointCloudRegistrationTool_screenshot.png)
 
-Up/down arrow keys adjust the: *maximum residual threshold*.
+Each point is colored proportional to its distance to the closest point on the target cloud.
 
-Color range of the residual colormap: RED = 0m, BLUE = max_residual_threshold
+Color range of the residual colormap: RED = 0cm, BLUE = maximum residual threshold (default: 10cm)
+
+Up/down arrow keys adjust the: maximum residual threshold.
 
 ### Build:
 
