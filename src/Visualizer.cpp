@@ -58,8 +58,8 @@ Visualizer::Visualizer(const std::string &name) {
     r_color_ = RGB(255, 0, 0); // Red
     keypoints_color_ = RGB(255, 255, 0); // Yellow
     
-    show_source_ = true;
-    show_target_ = true;
+    show_source_ = false;
+    show_target_ = false;
     show_registered_ = true;
     
     histogram_residuals_ = DoubleVectorPtr(new DoubleVector());
@@ -253,18 +253,15 @@ void Visualizer::visualize() {
         //Text
         if (!text_added_) {
             std::string command_panel = "S: toggle source cloud\nT: toggle target cloud\nR: toggle registered cloud\nK: toggle keypoints\nesc: exit";
-            viewer_->addText(command_panel, 50, 100, 15, 0.8, 0.8, 0.8, "command_panel");
+            viewer_->addText(command_panel, 50, 100, 15, 1, 1, 1, "command_panel");
             
             std::stringstream ss;
             ss << "f-score @ threshold = " << registrator_->getFScoreAtThreshold(registrator_->getResidualThreshold());
-            viewer_->addText(ss.str(), 50, 175, 15, 0.8, 0.8, 0.8, "fscore");
+            viewer_->addText(ss.str(), 50, 175, 15, 1, 1, 1, "fscore");
             
             ss.str(std::string()); // Clear stringstream
             ss << "max residual threshold = " << registrator_->getResidualThreshold() << " (modify: up/down)";
-            viewer_->addText(ss.str(), 50, 200, 15, 0.8, 0.8, 0.8, "max_residual_threshold");
-            
-            viewer_->addText("Source Cloud", 700, 100, 17, s_color_.r/255, s_color_.g/255, s_color_.b/255, "source_cloud_text");
-            viewer_->addText("Target Cloud", 850, 100, 17, t_color_.r/255, t_color_.g/255, t_color_.b/255, "target_cloud_text");
+            viewer_->addText(ss.str(), 50, 200, 15, 1, 1, 1, "max_residual_threshold");
             
             text_added_ = true;
         }

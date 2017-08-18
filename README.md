@@ -14,8 +14,8 @@ Automatically registers (aligns) and visualizes point clouds, or processes a who
   * [F-score](https://en.wikipedia.org/wiki/F1_score)
   * Histogram of residuals (in GUI mode)
 
-### Screenshot:
-![Example Screenshot](img/PointCloudRegistrationTool_screenshot.png)
+### Demo:
+![Example Screenshot](img/PointCloudRegistrationTool_demo.gif)
 
 Each point is colored proportional to its distance to the closest point on the target cloud.
 
