@@ -25,9 +25,8 @@ Up/down arrow keys adjust the: maximum residual threshold.
 
 ### Build:
 
-In `build` directory:
 ```
-mkdir Release && cd Release
+mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
