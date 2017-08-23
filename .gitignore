@@ -32,9 +32,8 @@
 *.app
 
 # Cmake build files
-!build/
-build/*
-!build/CMakeLists.txt
+build/
+bin/
 
 # Mac System Files
 .DS_Store

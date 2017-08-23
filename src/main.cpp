@@ -149,7 +149,7 @@ int main (int argc, char* argv[]) {
             continue;
         
         //Extract prefix for output files
-        std::string prefix = util::removeFileExtension(filepairs->at(i).targetfile);
+        std::string prefix = util::removeFileExtension(filepairs->at(i).sourcefile);
         
         //Set output file paths
         std::string transformation_matrix_filepath;
