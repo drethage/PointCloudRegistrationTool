@@ -39,7 +39,7 @@ to compile without openMP parallelization add: `-DWITH_OPENMP=OFF`
 
 The **source** cloud is the one we want to register to the **target** cloud
 
-`./point_cloud_registration_tool --gui source_cloud.ply target_cloud.ply`
+`./point_cloud_registration_tool --verbose --gui source_cloud.ply target_cloud.ply`
 
 ##### Some Flags:
 * --verbose, print information along the way
