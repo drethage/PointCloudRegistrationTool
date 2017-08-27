@@ -17,98 +17,78 @@
 #include <string>
 #include <vector>
 
-// Boost
-#include <boost/program_options.hpp>
-
 // PRT
 #include "util.hpp"
 #include "types.hpp"
 #include "Registrator.hpp"
 #include "Visualizer.hpp"
 
+// GFLAGS
+#include <gflags/gflags.h>
+
+DECLARE_bool(help);
+DEFINE_bool(h, false, "Show help");
+DEFINE_bool(gui, false, "launch GUI after registration");
+DEFINE_string(batch_file, "", "path to batch processing file");
+DEFINE_string(transformation_matrix_filepath, "[source_filename]_transform.csv", "filepath to output transformation matrix CSV");
+DEFINE_string(registered_pointcloud_filepath, "[source_filename]_registered.ply", "filepath to output registered point cloud PLY");
+DEFINE_string(residual_histogram_image_filepath, "[source_filename]_histogram.png", "filepath to output histogram PNG");
+DEFINE_string(fscore_filepath, "[source_filename]_fscore.txt", "filepath to output f-score TXT");
+
+#ifdef _OPENMP
+DEFINE_bool(no_parallel, false, "run single-threaded");
+#endif
+
 using namespace PRT;
 
 int main (int argc, char* argv[]) {
     
-    boost::program_options::options_description desc("Supported Options");
-    desc.add_options()
-        ("help,h", "program description")
-        ("gui,g", boost::program_options::bool_switch()->default_value(false), "run with GUI or headless mode")
-        ("batch_file,b", boost::program_options::value<std::string>(), "path to batch processing file")
-        ("verbose,v", boost::program_options::bool_switch()->default_value(false), "enable verbosity")
-        ("input-files", boost::program_options::value< std::vector<std::string> >(), "two input file paths (in order): target_point_cloud source_point_cloud")
-        ("registration_technique,r", boost::program_options::value< std::string >()->default_value("both"), "what kind of registration technique to use, 'correspondence', 'icp', 'both'")
-        ("residual_threshold,t", boost::program_options::value< double >()->default_value(0.1), "(in meters) max residual used in calculation of f-score, corresponds to blue in the residual colormap")
-        ("num_ksearch_neighbors,n", boost::program_options::value< int >()->default_value(100), "number of neighbors to consider in normals computation")
-        ("descriptor_radius,d", boost::program_options::value< double >()->default_value(1.0), "(in meters) radius of surrounding points to consider during descriptor computation")
-        ("subsampling_radius,s", boost::program_options::value< double >()->default_value(0.2), "(in meters) determines the degree of subsampling used, all points within a sphere of the specified radius are replaced by their centroid")
-        ("consensus_inlier_threshold,i", boost::program_options::value< double >()->default_value(0.2), "(in meters) maximum distance a point can lie from a hypothesis during sample consensus to be considered an inlier")
-        ("consensus_max_iterations", boost::program_options::value< int >()->default_value(100), "maximum number of iterations to perform sample consensus")
-        ("icp_max_iterations", boost::program_options::value< int >()->default_value(100), "maximum number of iterations to perform ICP")
-        ("icp_max_correspondence_distance", boost::program_options::value< double >()->default_value(0.05), "correspondences greater than this distance apart will be ignored in ICP")
-        ("transformation_matrix_filepath", boost::program_options::value<std::string>(), "filepath to output transformation matrix CSV")
-        ("registered_pointcloud_filepath", boost::program_options::value<std::string>(), "filepath to output registered point cloud PLY")
-        ("residual_histogram_image_filepath", boost::program_options::value<std::string>(), "filepath to output histogram PNG")
-        ("fscore_filepath", boost::program_options::value<std::string>(), "filepath to output f-score TXT")
+    std::string usage_message = "\nUsage:\n\n1. ./point_cloud_registration_tool [options] <source_point_cloud> <target_point_cloud>\n2. ./point_cloud_registration_tool [options] --batch_file <batch_filepath>\n\nA batch file is a two-column CSV. First column: source point cloud filepaths, second column: target point cloud filepaths.\n\nSee --help for optional arguments\n";
+    gflags::SetUsageMessage(usage_message);
     
-    #ifdef _OPENMP
-        ("no_parallel", boost::program_options::bool_switch()->default_value(false), "disable parallel execution")
-    #endif
-    ;
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
     
-    boost::program_options::positional_options_description pos_desc;
-    pos_desc.add("input-files", 2);
+    if (FLAGS_h) {
+        FLAGS_help = true;
+        gflags::HandleCommandLineHelpFlags();
+        exit(0);
+    }
     
-    boost::program_options::variables_map vm;
-    boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(desc).positional(pos_desc).run(), vm);
-    boost::program_options::notify(vm);
-    
-    if (vm.count("help")) {
-        std::cout << desc << std::endl;
+    if (argc < 3 && FLAGS_batch_file.empty()) {
+        std::cout << usage_message << std::endl;
         return 0;
     }
     
     pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);    
-    util::verbose = vm["verbose"].as< bool >();
-    
-    bool gui = vm["gui"].as<bool>();
     
     FilepairVectorPtr filepairs;
-    if (vm.count("batch_file")) {
+    if (!FLAGS_batch_file.empty()) {
         
-        filepairs = util::readBatchProcessingFile(vm["batch_file"].as< std::string >());
+        filepairs = util::readBatchProcessingFile(FLAGS_batch_file);
         
         if(filepairs->empty()) {
             std::cout << "Invalid batch file path, exiting." << std::endl;
             return -1;
         }
         
-        gui = false;
+        FLAGS_gui = false;
         
-    } else if (vm.count("input-files") && vm["input-files"].as< std::vector< std::string > >().size() == 2) {
+    } else {
         
-        StringVector input_files = vm["input-files"].as< std::vector< std::string > >();
         filepair_t pair;
-        pair.targetfile = input_files[0];
-        pair.sourcefile = input_files[1];
+        pair.sourcefile = argv[1];
+        pair.targetfile = argv[2];
         filepairs = FilepairVectorPtr(new FilepairVector());
         filepairs->push_back(pair);
         
-    } else {
-        std::cout << "Usage:" << std::endl;
-        std::cout << "1. [target_point_cloud] [source_point_cloud]" << std::endl;
-        std::cout << "2. --batch_file [batch_filepath]" << std::endl;
-        std::cout << std::endl;
-        std::cout << "See --help for optional arguments" << std::endl;
-        return 0;
     }
     
     #ifdef _OPENMP
     omp_set_nested(true);
-    if (vm["no_parallel"].as< bool >())
+    if (FLAGS_no_parallel)
         omp_set_num_threads(1);
     else
-        if (util::verbose)
+        if (FLAGS_verbose)
             std::cout << "Executing in parallel" << std::endl;
     #endif
     
@@ -157,23 +137,23 @@ int main (int argc, char* argv[]) {
         std::string residual_histogram_image_filepath;
         std::string fscore_filepath;
         
-        if (vm.count("transformation_matrix_filepath"))
-            transformation_matrix_filepath = vm["transformation_matrix_filepath"].as<std::string>();
+        if (FLAGS_transformation_matrix_filepath != "[source_filename]_transform.csv")
+            transformation_matrix_filepath = FLAGS_transformation_matrix_filepath;
         else
             transformation_matrix_filepath = prefix + "_transform.csv";
     
-        if (vm.count("registered_pointcloud_filepath"))
-            registered_pointcloud_filepath = vm["registered_pointcloud_filepath"].as<std::string>();
+        if (FLAGS_registered_pointcloud_filepath != "[source_filename]_registered.ply")
+            registered_pointcloud_filepath = FLAGS_registered_pointcloud_filepath;
         else
             registered_pointcloud_filepath = prefix + "_registered.ply";
         
-        if (vm.count("residual_histogram_image_filepath"))
-            residual_histogram_image_filepath = vm["residual_histogram_image_filepath"].as<std::string>();
+        if (FLAGS_residual_histogram_image_filepath != "[source_filename]_histogram.png")
+            residual_histogram_image_filepath = FLAGS_residual_histogram_image_filepath;
         else
             residual_histogram_image_filepath = prefix + "_residual_histogram.png";
         
-        if (vm.count("fscore_filepath"))
-            fscore_filepath = vm["fscore_filepath"].as<std::string>();
+        if (FLAGS_fscore_filepath != "[source_filename]_fscore.txt")
+            fscore_filepath = FLAGS_fscore_filepath;
         else
             fscore_filepath = prefix + "_fscore.txt";
     
@@ -201,37 +181,37 @@ int main (int argc, char* argv[]) {
         //Registration
         //Setup
         Registrator::Ptr registrator (new Registrator());
-        registrator->setNumKSearchNeighbors(vm["num_ksearch_neighbors"].as<int>());
-        registrator->setDescriptorRadius(vm["descriptor_radius"].as<double>());
-        registrator->setSubsamplingRadius(vm["subsampling_radius"].as<double>());
-        registrator->setConsensusInlierThreshold(vm["consensus_inlier_threshold"].as<double>());
-        registrator->setConsensusMaxIterations(vm["consensus_max_iterations"].as<int>());
-        registrator->setICPMaxIterations(vm["icp_max_iterations"].as<int>());
-        registrator->setICPMaxCorrespondenceDistance(vm["icp_max_correspondence_distance"].as<double>());
-        registrator->setResidualThreshold(vm["residual_threshold"].as<double>());
+        registrator->setNumKSearchNeighbors(FLAGS_num_ksearch_neighbors);
+        registrator->setDescriptorRadius(FLAGS_descriptor_radius);
+        registrator->setSubsamplingRadius(FLAGS_subsampling_radius);
+        registrator->setConsensusInlierThreshold(FLAGS_consensus_inlier_threshold);
+        registrator->setConsensusMaxIterations(FLAGS_consensus_max_iterations);
+        registrator->setICPMaxIterations(FLAGS_icp_max_iterations);
+        registrator->setICPMaxCorrespondenceDistance(FLAGS_icp_max_correspondence_distance);
+        registrator->setResidualThreshold(FLAGS_residual_threshold);
         registrator->setTargetCloud(target_cloud);
         registrator->setSourceCloud(source_cloud);
         
         //Compute
-        registrator->performRegistration(vm["registration_technique"].as<std::string>());
+        registrator->performRegistration(FLAGS_registration_technique);
         
         //Save Results
         registrator->saveResidualColormapPointCloud(registered_pointcloud_filepath);
         registrator->saveFinalTransform(transformation_matrix_filepath);
-        registrator->saveFScoreAtThreshold(fscore_filepath, vm["residual_threshold"].as<double>());
+        registrator->saveFScoreAtThreshold(fscore_filepath, FLAGS_residual_threshold);
         
         std::cout << "Registration of " << source_cloud_filepath << " finished" << std::endl;
         std::cout << "F-score: " << registrator->getFScoreAtThreshold() << std::endl;
         std::cout << "Saved to: " << registered_pointcloud_filepath << std::endl;
         
-        if (!gui)
+        if (!FLAGS_gui)
             continue;
         
         //Visualization
-        Visualizer::Ptr visualizer (new Visualizer("Point Cloud Registration Tool"));
-        visualizer->setRegistrator(registrator);
-        visualizer->saveHistogramImage(residual_histogram_image_filepath);
-        visualizer->visualize();
+        Visualizer visualizer ("Point Cloud Registration Tool");
+        visualizer.setRegistrator(registrator);
+        visualizer.saveHistogramImage(residual_histogram_image_filepath);
+        visualizer.visualize();
         
     }
 

@@ -28,6 +28,7 @@
 #include <pcl/visualization/pcl_plotter.h>
 
 // VTK
+#include <vtkVersion.h>
 #include <vtkRenderWindow.h>
 #include <vtkWindow.h>
 #include <vtkSmartPointer.h>

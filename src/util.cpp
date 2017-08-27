@@ -9,12 +9,13 @@
 #include "util.hpp"
 #include "hsvrgb.cpp"
 
+DEFINE_bool(verbose, false, "enable verbosity");
+
 namespace util
 {
     static std::random_device rd;
     static std::mt19937 rng(rd());
     std::uniform_int_distribution<> dist (0, 100);
-    bool verbose = false;
     
     /**
      Print 4x4 in human readable form
@@ -64,7 +65,7 @@ namespace util
             
         }
         
-        if(util::verbose) {
+        if(FLAGS_verbose) {
             std::cout << "Loaded point cloud with " << cloud.size() << " points:" << std::endl;
             std::cout << filepath << std::endl;
         }
@@ -134,7 +135,7 @@ namespace util
         T.rotate(Eigen::AngleAxisf(beta, Eigen::Vector3f::UnitY()));
         T.rotate(Eigen::AngleAxisf(gamma, Eigen::Vector3f::UnitZ()));
     
-        if(util::verbose) {
+        if(FLAGS_verbose) {
             std::cout << "Applying Transformation:" << std::endl;
             util::print4x4Matrix (T.matrix());
         }
@@ -255,8 +256,8 @@ namespace util
             int comma_pos = line.find(',');
             
             filepair_t pair;
-            pair.targetfile = line.substr(0, comma_pos);
-            pair.sourcefile = line.substr(comma_pos+1, std::string::npos);
+            pair.sourcefile = line.substr(0, comma_pos);
+            pair.targetfile = line.substr(comma_pos+1, std::string::npos);
             filepairs->push_back(pair);
         }
         

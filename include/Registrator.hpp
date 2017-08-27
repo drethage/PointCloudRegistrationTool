@@ -32,16 +32,38 @@
 #include "types.hpp"
 #include "util.hpp"
 
+// GFLAGS
+#include <gflags/gflags.h>
+DECLARE_string(registration_technique);
+DECLARE_double(residual_threshold);
+DECLARE_uint64(num_ksearch_neighbors);
+DECLARE_double(descriptor_radius);
+DECLARE_double(subsampling_radius);
+DECLARE_double(consensus_inlier_threshold);
+DECLARE_uint64(consensus_max_iterations);
+DECLARE_uint64(icp_max_iterations);
+DECLARE_double(icp_max_correspondence_distance);
+
 using namespace PRT;
 
 class Registrator
 {
 public:
-    //Typedefs
-    typedef boost::shared_ptr< Registrator > Ptr;
-    enum class RegistrationType {CorrespondenceBased, ICPBased, Both};
+    // Constants
+    static const std::string DEFAULT_registration_technique;
+    static const double DEFAULT_residual_threshold;
+    static const int DEFAULT_num_ksearch_neighbors;
+    static const double DEFAULT_descriptor_radius;
+    static const double DEFAULT_subsampling_radius;
+    static const double DEFAULT_consensus_inlier_threshold;
+    static const int DEFAULT_consensus_max_iterations;
+    static const int DEFAULT_icp_max_iterations;
+    static const double DEFAULT_icp_max_correspondence_distance;
     
-    //Constructor
+    // Typedefs
+    typedef boost::shared_ptr< Registrator > Ptr;
+    
+    // Constructor
     Registrator();
     
     /**

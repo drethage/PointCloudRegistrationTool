@@ -33,11 +33,14 @@
 // PRT
 #include "types.hpp"
 
+// GFLAGS
+#include <gflags/gflags.h>
+DECLARE_bool(verbose);
+
 using namespace PRT;
 
 namespace util
 {
-    extern bool verbose;
     
     void print4x4Matrix (const Eigen::Matrix4f & matrix);
     double uniformRandom();

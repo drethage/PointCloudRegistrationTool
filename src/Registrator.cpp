@@ -8,6 +8,27 @@
 
 #include "Registrator.hpp"
 
+// Commandline Flags
+const std::string Registrator::DEFAULT_registration_technique("both");
+const double Registrator::DEFAULT_residual_threshold(0.1);
+const int Registrator::DEFAULT_num_ksearch_neighbors(100);
+const double Registrator::DEFAULT_descriptor_radius(1.0);
+const double Registrator::DEFAULT_subsampling_radius(0.2);
+const double Registrator::DEFAULT_consensus_inlier_threshold(0.2);
+const int Registrator::DEFAULT_consensus_max_iterations(100);
+const int Registrator::DEFAULT_icp_max_iterations(100);
+const double Registrator::DEFAULT_icp_max_correspondence_distance(0.05);
+
+DEFINE_string(registration_technique, Registrator::DEFAULT_registration_technique, "what kind of registration technique to use, 'correspondence', 'icp', 'both'");
+DEFINE_double(residual_threshold, Registrator::DEFAULT_residual_threshold, "in meters, max residual used in calculation of f-score, also corresponds to blue in the residual colormap");
+DEFINE_uint64(num_ksearch_neighbors, Registrator::DEFAULT_num_ksearch_neighbors, "number of neighbors to consider in normals computation");
+DEFINE_double(descriptor_radius, Registrator::DEFAULT_descriptor_radius, "in meters, radius of surrounding points to consider during descriptor computation");
+DEFINE_double(subsampling_radius, Registrator::DEFAULT_subsampling_radius, "in meters, determines the degree of subsampling used, all points within a sphere of the specified radius are replaced by their centroid");
+DEFINE_double(consensus_inlier_threshold, Registrator::DEFAULT_consensus_inlier_threshold, "in meters, maximum distance a point can lie from a hypothesis during sample consensus to be considered an inlier");
+DEFINE_uint64(consensus_max_iterations, Registrator::DEFAULT_consensus_max_iterations, "maximum number of iterations to perform sample consensus");
+DEFINE_uint64(icp_max_iterations, Registrator::DEFAULT_icp_max_iterations, "maximum number of iterations to perform ICP");
+DEFINE_double(icp_max_correspondence_distance, Registrator::DEFAULT_icp_max_correspondence_distance, "correspondences greater than this distance apart will be ignored in ICP");
+
 Registrator::Registrator() {
     
     s_cloud_ = PointCloudT::Ptr();
@@ -178,7 +199,7 @@ void Registrator::computeNormals() {
             s_norm_estimation.setInputCloud (s_cloud_);
             s_norm_estimation.compute (*s_cloud_normals_);
             
-            if(util::verbose) {
+            if(FLAGS_verbose) {
                 std::cout << "Computed source cloud normals (" << s_cloud_normals_->size() << ")" << std::endl;
             }
             
@@ -192,7 +213,7 @@ void Registrator::computeNormals() {
             t_norm_estimation.setInputCloud (t_cloud_);
             t_norm_estimation.compute (*t_cloud_normals_);
             
-            if(util::verbose) {
+            if(FLAGS_verbose) {
                 std::cout << "Computed target cloud normals (" << t_cloud_normals_->size() << ")" << std::endl;
             }
         }
@@ -212,14 +233,14 @@ void Registrator::extractKeypoints() {
     subsampling.setInputCloud (s_cloud_);
     subsampling.filter (*s_cloud_keypoints_);
     
-    if(util::verbose) {
+    if(FLAGS_verbose) {
         std::cout << "Subsampled source cloud from " << s_cloud_->size() << " -> " << s_cloud_keypoints_->size() << std::endl;
     }
 
     subsampling.setInputCloud(t_cloud_);
     subsampling.filter(*t_cloud_keypoints_);
     
-    if(util::verbose) {
+    if(FLAGS_verbose) {
         std::cout << "Subsampled target cloud from " << t_cloud_->size() << " -> " << t_cloud_keypoints_->size() << std::endl;
     }
 }
@@ -242,7 +263,7 @@ void Registrator::computeDescriptors() {
             s_shot.setSearchSurface (s_cloud_);
             s_shot.compute (*s_cloud_descriptors_);
             
-            if(util::verbose) {
+            if(FLAGS_verbose) {
                 std::cout << "Computed " << s_cloud_descriptors_->size() << " descriptors on source cloud keypoints" << std::endl;
             }
             
@@ -258,7 +279,7 @@ void Registrator::computeDescriptors() {
             t_shot.setSearchSurface (t_cloud_);
             t_shot.compute (*t_cloud_descriptors_);
             
-            if(util::verbose) {
+            if(FLAGS_verbose) {
                 std::cout << "Computed " << t_cloud_descriptors_->size() << " descriptors on target cloud keypoints" << std::endl;
             }
         }
@@ -291,7 +312,7 @@ void Registrator::findCorrespondences() {
         }
     }
     
-    if(util::verbose) {
+    if(FLAGS_verbose) {
         std::cout << "Found " << correspondences_->size() << " correspondences" << std::endl;
     }
     
@@ -310,7 +331,7 @@ void Registrator::filterCorrespondences() {
     ransac.setInputCorrespondences(correspondences_);
     ransac.getCorrespondences(*correspondences_);
 
-    if(util::verbose) {
+    if(FLAGS_verbose) {
         std::cout << "Retained " << correspondences_->size() << " correspondences after sample consensus filtering" << std::endl;
     }
 
@@ -332,7 +353,7 @@ void Registrator::computeCorrespondenceBasedTransformation() {
     transformation_estimation.estimateRigidTransformation (*s_cloud_keypoints_,
                                            *t_cloud_keypoints_, *correspondences_, correspondence_T_);
     
-    if(util::verbose) {
+    if(FLAGS_verbose) {
         std::cout << "Estimated correspondence-based transformation:" << std::endl;
         util::print4x4Matrix (correspondence_T_);
     }
@@ -354,19 +375,19 @@ void Registrator::ICPBasedRegistration() {
     if (is_correspondence_matching_complete_) {
         icp.align(*r_cloud_, correspondence_T_);
     
-        if(util::verbose)
+        if(FLAGS_verbose)
             std::cout << "Estimated combined correspondence/ICP-based transformation:" << std::endl;
     }
     else {
         icp.align(*r_cloud_);
         
-        if(util::verbose)
+        if(FLAGS_verbose)
             std::cout << "Estimated ICP-based transformation:" << std::endl;
     }
     
     icp_T_ = icp.getFinalTransformation();
     
-    if(util::verbose)
+    if(FLAGS_verbose)
         util::print4x4Matrix (icp_T_);
     
     is_icp_complete_ = true;
@@ -443,7 +464,7 @@ void Registrator::computeResiduals() {
         
     }
     
-    if(util::verbose)
+    if(FLAGS_verbose)
         std::cout << "Computed source -> target cloud residuals" << std::endl;
 }
 

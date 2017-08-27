@@ -33,31 +33,31 @@ make
 
 to compile without openMP parallelization add: `-DWITH_OPENMP=OFF`
 
-**Dependences:** PCL, Boost
+**Dependencies:** PCL
 
 ### Example Usage:
 
 The **source** cloud is the one we want to register to the **target** cloud
 
-`./point_cloud_registration_tool --gui target_cloud.ply source_cloud.ply`
+`./point_cloud_registration_tool --gui source_cloud.ply target_cloud.ply`
 
 ##### Some Flags:
-* --verbose, print some interesting information along the way
+* --verbose, print information along the way
 * --gui, show the GUI
 * --batch_file, path to a text file containing paths to point cloud pairs
 
 ##### Batch File Format:
 ```
-target_cloud_1.ply,source_cloud_1.ply
-target_cloud_2.obj,source_cloud_2.obj
-target_cloud_3.ply,source_cloud_3.obj
+source_cloud_1.ply,target_cloud_1.ply
+source_cloud_2.obj,target_cloud_2.obj
+source_cloud_3.ply,target_cloud_3.obj
 ```
 
 you can adjust many parameters of the registration routine, just ask `--help`
 
 ### Tested on:
-* Ubuntu (PCL 1.7, Boost 1.58)
-* MacOS (PCL 1.8, Boost 1.64)
+* Ubuntu (PCL 1.7)
+* MacOS (PCL 1.8)
 
 ### License
 

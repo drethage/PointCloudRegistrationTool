@@ -30,10 +30,6 @@ void keyboardEventOccurred (const pcl::visualization::KeyboardEvent& event, void
     if (event.getKeySym () == "Down" && event.keyDown ())
         vis->decrementResidualThreshold();
     
-    if (event.getKeySym () == "Escape" && event.keyDown ())
-        vis->closeVisualizer();
-    
-    
 }
 
 Visualizer::Visualizer(const std::string &name) {
@@ -176,7 +172,12 @@ void Visualizer::saveHistogramImage(std::string &filepath) {
     wif->Update();
     
     vtkPNGWriter* screenshot_writer = vtkPNGWriter::New();
+    
+    #if VTK_MAJOR_VERSION<6
+    screenshot_writer->SetInput(wif->GetOutput());
+    #else
     screenshot_writer->SetInputData(wif->GetOutput());
+    #endif
     screenshot_writer->SetFileName (filepath.c_str());
     screenshot_writer->Write();
     screenshot_writer->Delete();
@@ -190,7 +191,7 @@ void Visualizer::visualize() {
     if (!histogram_computed_)
         computeResidualHistogram();
     
-    while (!viewer_->wasStopped() && viewer_->getRenderWindow()->IsDrawable() && !stop_)
+    while (!viewer_->wasStopped())
     {
         viewer_->spinOnce();
         plotter_->spinOnce();
@@ -252,7 +253,7 @@ void Visualizer::visualize() {
         
         //Text
         if (!text_added_) {
-            std::string command_panel = "S: toggle source cloud\nT: toggle target cloud\nR: toggle registered cloud\nK: toggle keypoints\nesc: exit";
+            std::string command_panel = "S: toggle source cloud\nT: toggle target cloud\nR: toggle registered cloud\nK: toggle keypoints\nQ: quit";
             viewer_->addText(command_panel, 50, 100, 15, 1, 1, 1, "command_panel");
             
             std::stringstream ss;
@@ -267,12 +268,4 @@ void Visualizer::visualize() {
         }
     }
     
-}
-
-void Visualizer::closeVisualizer() {
-    stop_ = true;
-    viewer_->close();
-    plotter_->close();
-    
-    std::exit(0);
 }
