@@ -48,6 +48,31 @@ int main (int argc, char* argv[]) {
     
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     
+    if (FLAGS_descriptor_radius <= 0) {
+        std::cout << "Error: Descriptor radius must be a positive value." << std::endl;
+        return -1;
+    }
+    
+    if (FLAGS_subsampling_radius <= 0) {
+        std::cout << "Error: Subsampling radius must be a positive value." << std::endl;
+        return -1;
+    }
+    
+    if (FLAGS_consensus_inlier_threshold <= 0) {
+        std::cout << "Error: Consensus inlier threshold must be a positive value." << std::endl;
+        return -1;
+    }
+    
+    if (FLAGS_icp_max_correspondence_distance <= 0) {
+        std::cout << "Error: Maximum correspondence distance must be a positive value." << std::endl;
+        return -1;
+    }
+    
+    if (FLAGS_residual_threshold <= 0) {
+        std::cout << "Error: Residual threshold must be a positive value." << std::endl;
+        return -1;
+    }
+    
     if (FLAGS_h) {
         FLAGS_help = true;
         gflags::HandleCommandLineHelpFlags();
@@ -91,8 +116,7 @@ int main (int argc, char* argv[]) {
         if (FLAGS_verbose)
             std::cout << "Executing in parallel" << std::endl;
     #endif
-    
-    #pragma omp parallel for
+
     for(FilepairVector::size_type i = 0; i < filepairs->size(); i++) {
         
         PointCloudT::Ptr target_cloud (new PointCloudT);
@@ -103,26 +127,17 @@ int main (int argc, char* argv[]) {
         source_cloud->clear();
         std::string source_cloud_filepath = filepairs->at(i).sourcefile;
         bool reads_successful = true;
-        
-        #pragma omp parallel sections
-        {
-            #pragma omp section
-            {
-                if (util::loadPointCloud(target_cloud_filepath, *target_cloud) != 0) {
-                    std::cout << "Failed to load: " << target_cloud_filepath << std::endl;
-                    std::cout << "Skipping.." << std::endl;
-                    reads_successful = false;
-                }
-            }
             
-            #pragma omp section
-            {
-                if (util::loadPointCloud(source_cloud_filepath, *source_cloud) != 0) {
-                    std::cout << "Failed to load: " << source_cloud_filepath << std::endl;
-                    std::cout << "Skipping.." << std::endl;
-                    reads_successful = false;
-                }
-            }
+       	if (util::loadPointCloud(source_cloud_filepath, *source_cloud) != 0) {
+            std::cout << "Invalid input:" << std::endl << source_cloud_filepath << std::endl;
+            std::cout << "Skipping.." << std::endl;
+            reads_successful = false;
+        }
+
+        if (util::loadPointCloud(target_cloud_filepath, *target_cloud) != 0) {
+            std::cout << "Invalid input:" << std::endl << target_cloud_filepath << std::endl;
+            std::cout << "Skipping.." << std::endl;
+            reads_successful = false;
         }
         
         if(!reads_successful)

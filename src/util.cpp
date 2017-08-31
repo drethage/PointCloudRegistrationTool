@@ -7,7 +7,7 @@
  */
 
 #include "util.hpp"
-#include "hsvrgb.cpp"
+#include "../extern/hsvrgb.cpp"
 
 DEFINE_bool(verbose, false, "enable verbosity");
 
@@ -47,23 +47,50 @@ namespace util
         
         std::string file_extension = extractFileExtension(filepath);
         std::transform(file_extension.begin(), file_extension.end(), file_extension.begin(), ::tolower); //Convert to lowercase
+        
         if (file_extension.compare(".ply") == 0) {
             
-            if (pcl::io::loadPLYFile (filepath, cloud) < 0)
-            {
-                std::cout << "Error loading cloud "<< filepath << std::endl;
-                return (-1);
+            try {
+            
+                std::ifstream ss(filepath, std::ios::binary);
+                tinyply::PlyFile ply_file(ss);
+                std::vector<float> vertices;
+                
+                uint32_t vertex_count = ply_file.request_properties_from_element("vertex", { "x", "y", "z" }, vertices);
+	                		
+		if (vertex_count == 0)
+		    return -1;
+
+		ply_file.read(ss);
+   
+                cloud.width = vertex_count;
+                cloud.height = 1;
+                cloud.is_dense = false;
+                cloud.points.resize(vertex_count);
+                
+                size_t j = 0;
+                for (size_t i = 0; i < vertices.size(); i+=3, j++) {
+                    cloud.points[j].x = vertices[i];
+                    cloud.points[j].y = vertices[i+1];
+                    cloud.points[j].z = vertices[i+2];
+                }
+                
+            } catch (const std::exception& e) {
+                return -1;
             }
             
         } else if (file_extension.compare(".obj") == 0) {
             
-            if (pcl::io::loadOBJFile(filepath, cloud) < 0)
-            {
-                std::cout << "Error loading cloud "<< filepath << std::endl;
-                return (-1);
+            try {
+                if (pcl::io::loadOBJFile(filepath, cloud) != 0)
+		    return -1;
+            } catch (const std::exception& e) {
+                return -1;
             }
             
-        }
+        } else {
+	    return -1;
+	}
         
         if(FLAGS_verbose) {
             std::cout << "Loaded point cloud with " << cloud.size() << " points:" << std::endl;

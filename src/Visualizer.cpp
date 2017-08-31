@@ -253,8 +253,8 @@ void Visualizer::visualize() {
         
         //Text
         if (!text_added_) {
-            std::string command_panel = "S: toggle source cloud\nT: toggle target cloud\nR: toggle registered cloud\nK: toggle keypoints\nQ: quit";
-            viewer_->addText(command_panel, 50, 100, 15, 1, 1, 1, "command_panel");
+            std::string command_panel = "S: toggle source cloud\nT: toggle target cloud\nR: toggle registered cloud\nK: toggle keypoints\nF: adjust center of revolution\nQ: quit";
+            viewer_->addText(command_panel, 50, 75, 15, 1, 1, 1, "command_panel");
             
             std::stringstream ss;
             ss << "f-score @ threshold = " << registrator_->getFScoreAtThreshold(registrator_->getResidualThreshold());

@@ -23,6 +23,24 @@ Color range of the residual colormap: RED = 0cm, BLUE = maximum residual thresho
 
 Up/down arrow keys adjust the: maximum residual threshold.
 
+### Install:
+
+Requires minimum PCL 1.7
+
+[Install PCL on Ubuntu](http://pointclouds.org/downloads/linux.html):
+
+```
+sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl
+sudo apt-get update
+sudo apt-get install libpcl-all
+```
+
+[Install PCL on MacOS via Homebrew](http://www.pointclouds.org/documentation/tutorials/installing_homebrew.php):
+
+```
+brew install pcl
+```
+
 ### Build:
 
 ```
@@ -31,9 +49,9 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 
-to compile without openMP parallelization add: `-DWITH_OPENMP=OFF`
+In MacOS, you may need to use a different compiler than the one shipped with Xcode to build with openMP,
 
-**Dependencies:** PCL
+to compile without openMP parallelization add: `-DWITH_OPENMP=OFF`
 
 ### Example Usage:
 
