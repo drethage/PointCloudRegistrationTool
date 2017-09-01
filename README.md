@@ -25,7 +25,7 @@ Up/down arrow keys adjust the: maximum residual threshold.
 
 ### Install:
 
-Requires minimum PCL 1.7
+Requires minimum PCL 1.7.2
 
 [Install PCL on Ubuntu](http://pointclouds.org/downloads/linux.html):
 
@@ -53,6 +53,8 @@ In MacOS, you may need to use a different compiler than the one shipped with Xco
 
 to compile without openMP parallelization add: `-DWITH_OPENMP=OFF`
 
+
+
 ### Example Usage:
 
 The **source** cloud is the one we want to register to the **target** cloud
@@ -74,8 +76,8 @@ source_cloud_3.ply,target_cloud_3.obj
 you can adjust many parameters of the registration routine, just ask `--help`
 
 ### Tested on:
-* Ubuntu (PCL 1.7)
-* MacOS (PCL 1.8)
+* Ubuntu (PCL 1.7.2)
+* MacOS (PCL 1.8.1)
 
 ### License
 

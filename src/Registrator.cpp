@@ -253,7 +253,7 @@ void Registrator::computeDescriptors() {
     
     #pragma omp parallel sections
     {
-    #pragma omp section
+        #pragma omp section
         {
             pcl::SHOTEstimationOMP<PointT, NormalT, SHOTDescriptorT> s_shot;
             s_shot.setRadiusSearch (descriptor_radius_);
@@ -428,40 +428,53 @@ void Registrator::computeResiduals() {
     t_r_residuals_->resize(t_cloud_->size());
     r_t_residuals_->resize(r_cloud_->size());
 
-    std::vector<int> neighbor_indice (1);
-    std::vector<float> neighbor_squared_distance (1);
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            std::vector<int> neighbor_indice_1 (1);
+            std::vector<float> neighbor_squared_distance_1 (1);
+            pcl::KdTreeFLANN<PointT> nn_search_1;
+            nn_search_1.setInputCloud (r_cloud_);
+            t_r_max_residual_ = 0;
+            int i_1 = 0;
+            double d_1 = 0;
+            
+            for(PointCloudT::iterator it = t_cloud_->begin(); it != t_cloud_->end(); it++){
+                
+                nn_search_1.nearestKSearch((PointT)*it, 1, neighbor_indice_1, neighbor_squared_distance_1);
+                d_1 = std::sqrt(neighbor_squared_distance_1[0]);
+                
+                t_r_residuals_->at(i_1++) = d_1;
+                
+                if (d_1 > t_r_max_residual_)
+                    t_r_max_residual_ = d_1;
+                
+            }
+        }
     
-    pcl::KdTreeFLANN<PointT> nn_search;
-    nn_search.setInputCloud (r_cloud_);
-    t_r_max_residual_ = 0;
-    int i = 0;
-    double d = 0;
-    for(PointCloudT::iterator it = t_cloud_->begin(); it != t_cloud_->end(); it++){
-        
-        nn_search.nearestKSearch((PointT)*it, 1, neighbor_indice, neighbor_squared_distance);
-        d = std::sqrt(neighbor_squared_distance[0]);
-        
-        t_r_residuals_->at(i++) = d;
-        
-        if (d > t_r_max_residual_)
-            t_r_max_residual_ = d;
-        
-    }
-    
-    nn_search.setInputCloud (t_cloud_);
-    r_t_max_residual_ = 0;
-    i = 0;
-    d = 0;
-    for(PointCloudT::iterator it = r_cloud_->begin(); it != r_cloud_->end(); it++){
-        
-        nn_search.nearestKSearch((PointT)*it, 1, neighbor_indice, neighbor_squared_distance);
-        d = std::sqrt(neighbor_squared_distance[0]);
-        
-        r_t_residuals_->at(i++) = d;
-        
-        if (d > r_t_max_residual_)
-            r_t_max_residual_ = d;
-        
+        #pragma omp section
+        {
+            std::vector<int> neighbor_indice_2 (1);
+            std::vector<float> neighbor_squared_distance_2 (1);
+            pcl::KdTreeFLANN<PointT> nn_search_2;
+            nn_search_2.setInputCloud (t_cloud_);
+            r_t_max_residual_ = 0;
+            int i_2 = 0;
+            double d_2 = 0;
+            
+            for(PointCloudT::iterator it = r_cloud_->begin(); it != r_cloud_->end(); it++){
+                
+                nn_search_2.nearestKSearch((PointT)*it, 1, neighbor_indice_2, neighbor_squared_distance_2);
+                d_2 = std::sqrt(neighbor_squared_distance_2[0]);
+                
+                r_t_residuals_->at(i_2++) = d_2;
+                
+                if (d_2 > r_t_max_residual_)
+                    r_t_max_residual_ = d_2;
+                
+            }
+        }
     }
     
     if(FLAGS_verbose)
