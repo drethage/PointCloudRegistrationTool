@@ -27,14 +27,6 @@
 
 /* Author: Jan Winkler */
 
-
-#include <iostream>
-#include <cstdlib>
-#include <cmath>
-
-using namespace std;
-
-
 /*! \brief Convert RGB to HSV color space
   
   Converts a given set of RGB values `r', `g', `b' into HSV
@@ -50,14 +42,17 @@ using namespace std;
   \param fV Hue component, used as output, range: [0, 1]
   
 */
-void RGBtoHSV(double& fR, double& fG, double& fB, double& fH, double& fS, double& fV) {
-  double fCMax = max(max(fR, fG), fB);
-  double fCMin = min(min(fR, fG), fB);
+
+#include "hsvrgb.hpp"
+
+void hsvrgb::RGBtoHSV(double& fR, double& fG, double& fB, double& fH, double& fS, double& fV) {
+  double fCMax = std::max(std::max(fR, fG), fB);
+  double fCMin = std::min(std::min(fR, fG), fB);
   double fDelta = fCMax - fCMin;
   
   if(fDelta > 0) {
     if(fCMax == fR) {
-      fH = 60 * (fmod(((fG - fB) / fDelta), 6));
+      fH = 60 * (std::fmod(((fG - fB) / fDelta), 6));
     } else if(fCMax == fG) {
       fH = 60 * (((fB - fR) / fDelta) + 2);
     } else if(fCMax == fB) {
@@ -98,10 +93,11 @@ void RGBtoHSV(double& fR, double& fG, double& fB, double& fH, double& fS, double
   \param fV Hue component, used as input, range: [0, 1]
   
 */
-void HSVtoRGB(double& fR, double& fG, double& fB, double& fH, double& fS, double& fV) {
+
+void hsvrgb::HSVtoRGB(double& fR, double& fG, double& fB, double& fH, double& fS, double& fV) {
   double fC = fV * fS; // Chroma
-  double fHPrime = fmod(fH / 60.0, 6);
-  double fX = fC * (1 - fabs(fmod(fHPrime, 2) - 1));
+  double fHPrime = std::fmod(fH / 60.0, 6);
+  double fX = fC * (1 - std::fabs(std::fmod(fHPrime, 2) - 1));
   double fM = fV - fC;
   
   if(0 <= fHPrime && fHPrime < 1) {

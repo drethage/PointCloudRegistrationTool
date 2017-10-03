@@ -139,7 +139,8 @@ void Visualizer::resetRegisteredCloud() {
     }
     
     if (show_registered_) {
-        viewer_->addPointCloud<PointRGBT> (registrator_->getRegisteredRGBCloud(), "r_cloud");
+        pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> color(registrator_->getRegisteredRGBCloud());
+        viewer_->addPointCloud<PointRGBT> (registrator_->getRegisteredRGBCloud(), color, "r_cloud");
         r_cloud_visible_ = true;
         viewer_->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, point_size_, "r_cloud");
     }
@@ -154,8 +155,18 @@ void Visualizer::computeResidualHistogram() {
     std::copy(registrator_->getRegisteredToTargetResiduals()->begin(), registrator_->getRegisteredToTargetResiduals()->end(), histogram_residuals_->begin());
     
     util::removeElementsAboveThreshold(histogram_residuals_, registrator_->getResidualThreshold()); //Remove residual values above residual_threshold_
-    plotter_->clearPlots();
-    plotter_->addHistogramData(*histogram_residuals_, getNumHistogramBins());
+    
+    if (!histogram_computed_) {
+        plotter_->clearPlots();
+        plotter_->addHistogramData(*histogram_residuals_, getNumHistogramBins());
+    } else {
+        #if VTK_MAJOR_VERSION > 6
+        plotter_->clearPlots();
+        plotter_->addHistogramData(*histogram_residuals_, getNumHistogramBins());
+        #endif
+    }
+    
+    histogram_computed_ = true;
 }
 
 void Visualizer::saveHistogramImage(std::string &filepath) {
@@ -184,6 +195,12 @@ void Visualizer::saveHistogramImage(std::string &filepath) {
     
     wif->Delete();
     
+    #if VTK_MAJOR_VERSION < 6
+    plotter_->clearPlots();
+    plotter_->close();
+    plotter_->getRenderWindow()->Delete();
+    #endif
+    
 }
 
 void Visualizer::visualize() {
@@ -194,11 +211,15 @@ void Visualizer::visualize() {
     while (!viewer_->wasStopped())
     {
         viewer_->spinOnce();
+        #if VTK_MAJOR_VERSION > 6
         plotter_->spinOnce();
+        #endif
         
         //Registered
         if (show_registered_ && !registrator_->getRegisteredRGBCloud()->empty() && !r_cloud_visible_) {
-            viewer_->addPointCloud<PointRGBT> (registrator_->getRegisteredRGBCloud(), "r_cloud");
+            
+            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> color(registrator_->getRegisteredRGBCloud());
+            viewer_->addPointCloud<PointRGBT> (registrator_->getRegisteredRGBCloud(), color, "r_cloud");
             r_cloud_visible_ = true;
             viewer_->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, point_size_, "r_cloud");
         } else if (!show_registered_ && r_cloud_visible_) {

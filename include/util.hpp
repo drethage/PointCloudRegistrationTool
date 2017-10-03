@@ -32,6 +32,7 @@
 
 // PRT
 #include "types.hpp"
+#include "hsvrgb.hpp"
 #include "tinyply.h"
 
 // GFLAGS

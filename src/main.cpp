@@ -211,6 +211,7 @@ int main (int argc, char* argv[]) {
         registrator->performRegistration(FLAGS_registration_technique);
         
         //Save Results
+        
         registrator->saveResidualColormapPointCloud(registered_pointcloud_filepath);
         registrator->saveFinalTransform(transformation_matrix_filepath);
         registrator->saveFScoreAtThreshold(fscore_filepath, FLAGS_residual_threshold);

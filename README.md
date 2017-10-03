@@ -4,7 +4,7 @@ Automatically registers (aligns) and visualizes point clouds, or processes a who
 
 ### Main Features:
 * Coarse-to-fine registration (correspondence-based followed by ICP refinement)
-* PLY/OBJ input
+* PLY/OBJ input support
 * GUI
 * Batch processing
 * Parallelized
@@ -25,21 +25,34 @@ Up/down arrow keys adjust the: maximum residual threshold.
 
 ### Install:
 
-Requires minimum PCL 1.7.2
+#### Ubuntu 14.04:
 
-[Install PCL on Ubuntu](http://pointclouds.org/downloads/linux.html):
+If you already have ROS installed:
+```
+sudo apt-get install libpcl-1.7-all-dev
+```
 
+Else:
 ```
 sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl
 sudo apt-get update
 sudo apt-get install libpcl-all
 ```
 
-[Install PCL on MacOS via Homebrew](http://www.pointclouds.org/documentation/tutorials/installing_homebrew.php):
+#### Ubuntu 16.04:
+
+```
+sudo apt-get update 
+sudo apt-get install libpcl-dev
+```
+
+#### MacOS:
 
 ```
 brew install pcl
 ```
+
+###### More info at: [Install PCL on MacOS via Homebrew](http://www.pointclouds.org/documentation/tutorials/installing_homebrew.php)
 
 ### Build:
 
@@ -52,8 +65,6 @@ make
 In MacOS, you may need to use a different compiler than the one shipped with Xcode to build with openMP,
 
 to compile without openMP parallelization add: `-DWITH_OPENMP=OFF`
-
-
 
 ### Example Usage:
 
@@ -76,8 +87,10 @@ source_cloud_3.ply,target_cloud_3.obj
 you can adjust many parameters of the registration routine, just ask `--help`
 
 ### Tested on:
-* Ubuntu (PCL 1.7.2)
-* MacOS (PCL 1.8.1)
+* Ubuntu (PCL 1.7)
+* MacOS (PCL 1.8)
+
+###### Minimum PCL 1.7 required
 
 ### License
 

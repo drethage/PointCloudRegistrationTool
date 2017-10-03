@@ -7,7 +7,8 @@
  */
 
 #include "util.hpp"
-#include "../extern/hsvrgb.cpp"
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
 
 DEFINE_bool(verbose, false, "enable verbosity");
 
@@ -52,8 +53,8 @@ namespace util
             
             try {
             
-                std::ifstream ss(filepath, std::ios::binary);
-                tinyply::PlyFile ply_file(ss);
+                std::ifstream fs(filepath, std::ios::binary);
+                tinyply::PlyFile ply_file(fs);
                 std::vector<float> vertices;
                 
                 uint32_t vertex_count = ply_file.request_properties_from_element("vertex", { "x", "y", "z" }, vertices);
@@ -61,7 +62,7 @@ namespace util
 		if (vertex_count == 0)
 		    return -1;
 
-		ply_file.read(ss);
+		ply_file.read(fs);
    
                 cloud.width = vertex_count;
                 cloud.height = 1;
@@ -81,16 +82,35 @@ namespace util
             
         } else if (file_extension.compare(".obj") == 0) {
             
-            try {
-                if (pcl::io::loadOBJFile(filepath, cloud) != 0)
-		    return -1;
-            } catch (const std::exception& e) {
+            tinyobj::attrib_t attrib;
+            std::vector<tinyobj::shape_t> shapes;
+            std::vector<tinyobj::material_t> materials;
+            
+            std::string err;
+            bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, filepath.c_str());
+            
+            if (!err.empty()) { // `err` may contain warning message.
+                std::cerr << err << std::endl;
+            }
+            
+            if (!ret) {
                 return -1;
             }
             
+            int num_vertices = attrib.vertices.size();
+            
+            cloud.points.resize(num_vertices/3);
+            cloud.width = cloud.points.size();
+            cloud.height = 1;
+            cloud.is_dense = false;
+            
+            int i = 0;
+            for (size_t v = 0; v < num_vertices; v+=3, i++)
+                cloud.points[i] = PointT(attrib.vertices[v], attrib.vertices[v+1], attrib.vertices[v+2]);
+            
         } else {
-	    return -1;
-	}
+            return -1;
+        }
         
         if(FLAGS_verbose) {
             std::cout << "Loaded point cloud with " << cloud.size() << " points:" << std::endl;
@@ -126,7 +146,7 @@ namespace util
     }
     
     /**
-     Write XYZRGBA point cloud to disk in PLY format
+     Write XYZRGBA point cloud to disk in PLY or OBJ format
      */
     int writePointCloudToPLY(std::string filepath, PointCloudRGBT &cloud) {
         
@@ -194,7 +214,7 @@ namespace util
      Everything in [0,1] range except h in [0,360] range
      */
     void hsv2rgb(double& r, double& g, double& b, double& h, double& s, double& v) {
-        HSVtoRGB(r, g, b, h, s, v);
+        hsvrgb::HSVtoRGB(r, g, b, h, s, v);
     }
     
     /**
@@ -202,7 +222,7 @@ namespace util
      Everything in [0,1] range except h in [0,360] range
      */
     void rgb2hsv(double& r, double& g, double& b, double& h, double& s, double& v) {
-        HSVtoRGB(r, g, b, h, s, v);
+        hsvrgb::HSVtoRGB(r, g, b, h, s, v);
     }
     
     /**
